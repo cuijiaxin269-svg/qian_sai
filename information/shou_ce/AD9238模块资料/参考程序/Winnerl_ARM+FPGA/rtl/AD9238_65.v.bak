@@ -1,0 +1,60 @@
+module AD9238_65(
+	input		wire					SYS_CLK ,
+	input		wire					RST_N		,
+	input		wire	[11:0]	ADC_IN	,	
+	input   wire					OTR     ,
+	output	wire					PDN			,
+	output  wire          OEB_B   ,
+	output	wire					ADC_CLK ,
+	output	wire	[11:0]	ADC_OUTA,
+	output	wire	[11:0]	ADC_OUTB
+);
+
+//ADC采集到数据和电压转换公式为：ADC_DATA * (20/4096)
+//采集到的数据通过 Signal_Tap II 查看
+
+//AD9238的最大采样率为65Mhz，最低采样率为1Mhz
+
+wire				 CLK_65M;
+wire				 CLK_AD	;
+reg		[11:0] ADC_BUFA;  //ADCA数据缓存器
+reg		[11:0] ADC_BUFB;  //ADCB数据缓存器
+
+//生成ADC最大采样率65M的时钟
+PLL_CLK u_PLL_CLK(
+	.areset (~RST_N	),
+	.inclk0 (SYS_CLK),
+	.c0			(CLK_65M),
+	.c1     (CLK_AD )
+);
+
+//ADCA数据读取
+always@(posedge CLK_AD or negedge RST_N)
+begin
+	if(!RST_N)begin
+		ADC_BUFA	<= 12'd0;
+	end
+	else begin
+		ADC_BUFA 	<= 12'hFFF - ADC_IN;
+	end
+end
+
+//ADCB数据读取
+always@(negedge CLK_AD or negedge RST_N)
+begin
+	if(!RST_N)begin
+		ADC_BUFB	<= 12'd0;
+	end
+	else begin
+		ADC_BUFB 	<= 12'hFFF - ADC_IN;
+	end
+end
+
+assign OEB_B    = 1'b0;
+assign PDN      = 1'b0;
+assign ADC_CLK  = CLK_65M;
+assign ADC_OUTA = ADC_BUFA;
+assign ADC_OUTB = ADC_BUFB;
+
+
+endmodule

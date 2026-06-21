@@ -1,0 +1,215 @@
+{
+  "main": {
+    "id": "34768847053ce430",
+    "type": "split",
+    "children": [
+      {
+        "id": "30666ed36730a7d7",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "efe0808602a708c9",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "软件模块整理.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "软件模块整理"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "b2a3df5ff8c84919",
+    "type": "split",
+    "children": [
+      {
+        "id": "3a3c7a4998830cb8",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "787a73cd4d2dfbeb",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "文件列表"
+            }
+          },
+          {
+            "id": "a5837c5a3df00d03",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "搜索"
+            }
+          },
+          {
+            "id": "99ff20305c9184cf",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "书签"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "d7f4a0449c1f5a4b",
+    "type": "split",
+    "children": [
+      {
+        "id": "1bfebb6052c31f29",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "8068fd16920a771d",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "软件模块整理.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "软件模块整理 的反向链接列表"
+            }
+          },
+          {
+            "id": "5f39b7a71c137220",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "软件模块整理.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "软件模块整理 的出链列表"
+            }
+          },
+          {
+            "id": "2d58b37ea385a0bd",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "标签"
+            }
+          },
+          {
+            "id": "ed88e0e5d7ab73a6",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "添加笔记属性"
+            }
+          },
+          {
+            "id": "d24135c30ff1ce3f",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "软件模块整理.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "软件模块整理 的大纲"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:打开快速切换": false,
+      "graph:查看关系图谱": false,
+      "canvas:新建白板": false,
+      "daily-notes:打开/创建今天的日记": false,
+      "templates:插入模板": false,
+      "command-palette:打开命令面板": false,
+      "bases:新建数据库": false
+    }
+  },
+  "active": "efe0808602a708c9",
+  "lastOpenFiles": [
+    "ad9238/AD9238_外部引脚连接说明.md",
+    "软件模块整理.md",
+    "整个系统的搭建.md",
+    "project_SPI_dds/控制逻辑.md",
+    "project_SPI_dds/SPI-ad8933.md",
+    "project_SPI_dds/ad9833.pdf",
+    "project_SPI_dds",
+    "dac1220_data_out/DAC1220/参考例程/FPGA/DAC1220_FPGA参考程序.zip",
+    "dac1220_data_out/DAC1220/参考例程/STM32/DAC1220_STM32参考程序.rar",
+    "dac1220_data_out/DAC1220/参考例程/FPGA",
+    "dac1220_data_out/DAC1220/尺寸图/【尺寸图】DAC1220模块V1.1.pdf",
+    "dac1220_data_out/DAC1220/参考例程/STM32",
+    "dac1220_data_out/DAC1220/芯片手册/TI-DAC1220.pdf",
+    "dac1220_data_out/DAC1220/芯片手册/3PEAK-TP2582.pdf",
+    "dac1220_data_out/DAC1220/尺寸图/【DXF】DAC1220模块V1.1.dxf",
+    "dac1220_data_out/DAC1220基本使用方法整理.md",
+    "dac1220_data_out/DAC1220_STM32H743_CubeMX_SPI配置.md",
+    "ad9238/AD9238模块资料/模块尺寸/DXF_AD9238_PCB_DXF_2024-03-23.bmp",
+    "ad9238/AD9238模块资料/模块尺寸/3D_AD9238_PCB_2024-03-23.png",
+    "ad9238/STM32H7R7_PSSI_DMA_AD9238采集工程整理.md",
+    "ad9238/AD9238_引脚配置表.md",
+    "ad9238/AD9238_STM32使用整理.md",
+    "ad9238/AD9238_只用STM32采集方案.md",
+    "IMG_1333(20260614-171111).png",
+    "IMG_1334(20260614-171130).png",
+    "自制LCR电桥_最小测量闭环_继电器矩阵修正版.md"
+  ]
+}

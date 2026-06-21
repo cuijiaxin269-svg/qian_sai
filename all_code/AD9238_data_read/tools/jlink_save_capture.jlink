@@ -1,0 +1,5 @@
+connect
+h
+savebin D:\wenjian\dpj\AD9238_data_read\build\jlink-debug\ad9238_capture.bin 0x24000160 0x2000
+g
+exit

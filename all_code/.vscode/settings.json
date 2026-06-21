@@ -1,0 +1,6 @@
+{
+  "cmake.generator": "Ninja",
+  "cmake.configureOnOpen": true,
+  "cortex-debug.armToolchainPath": "C:\\Program Files (x86)\\Arm GNU Toolchain arm-none-eabi\\12.2 mpacbti-rel1\\bin",
+  "cortex-debug.openocdPath": "C:\\Users\\lenovo\\AppData\\Local\\Microsoft\\WinGet\\Packages\\xpack-dev-tools.openocd-xpack_Microsoft.Winget.Source_8wekyb3d8bbwe\\xpack-openocd-0.12.0-7\\bin\\openocd.exe"
+}

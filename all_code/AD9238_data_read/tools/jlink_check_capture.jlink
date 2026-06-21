@@ -1,0 +1,9 @@
+connect
+h
+mem32 0x24004244 2
+mem16 0x240001E0 16
+mem16 0x240021E0 8
+mem16 0x240031E0 8
+regs
+g
+exit

@@ -1,0 +1,92 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "STM32: Configure",
+      "type": "process",
+      "command": "C:\\Program Files\\CMake\\bin\\cmake.exe",
+      "args": [
+        "-S",
+        "${workspaceFolder}\\Appli",
+        "-B",
+        "${workspaceFolder}\\build\\jlink-debug",
+        "-G",
+        "Ninja",
+        "-DCMAKE_BUILD_TYPE=Debug",
+        "-DCMAKE_TOOLCHAIN_FILE=${workspaceFolder}\\gcc-arm-none-eabi.cmake"
+      ],
+      "options": {
+        "env": {
+          "Path": "C:\\Program Files (x86)\\Arm GNU Toolchain arm-none-eabi\\12.2 mpacbti-rel1\\bin;C:\\Users\\lenovo\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Ninja-build.Ninja_Microsoft.Winget.Source_8wekyb3d8bbwe;${env:Path}"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "STM32: Build",
+      "type": "process",
+      "command": "C:\\Program Files\\CMake\\bin\\cmake.exe",
+      "args": [
+        "--build",
+        "${workspaceFolder}\\build\\jlink-debug",
+        "--parallel"
+      ],
+      "dependsOn": "STM32: Configure",
+      "dependsOrder": "sequence",
+      "options": {
+        "env": {
+          "Path": "C:\\Program Files (x86)\\Arm GNU Toolchain arm-none-eabi\\12.2 mpacbti-rel1\\bin;C:\\Users\\lenovo\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Ninja-build.Ninja_Microsoft.Winget.Source_8wekyb3d8bbwe;${env:Path}"
+        }
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [
+        "$gcc"
+      ]
+    },
+    {
+      "label": "J-Link: Build and Flash",
+      "type": "process",
+      "command": "D:\\tool\\jlink\\SEGGER_JLink\\JLink_V948\\JLink.exe",
+      "args": [
+        "-device",
+        "STM32H7R7L8",
+        "-if",
+        "SWD",
+        "-speed",
+        "1000",
+        "-SelectEmuBySN",
+        "30500384",
+        "-autoconnect",
+        "1",
+        "-CommandFile",
+        "${workspaceFolder}\\tools\\jlink_flash.jlink"
+      ],
+      "dependsOn": "STM32: Build",
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "J-Link: Verify Only",
+      "type": "process",
+      "command": "D:\\tool\\jlink\\SEGGER_JLink\\JLink_V948\\JLink.exe",
+      "args": [
+        "-device",
+        "STM32H7R7L8",
+        "-if",
+        "SWD",
+        "-speed",
+        "1000",
+        "-SelectEmuBySN",
+        "30500384",
+        "-autoconnect",
+        "1",
+        "-CommandFile",
+        "${workspaceFolder}\\tools\\jlink_verify_only.jlink"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

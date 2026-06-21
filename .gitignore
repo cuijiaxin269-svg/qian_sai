@@ -1,0 +1,12 @@
+# Incomplete downloads
+*.baiduyun.p.downloading
+
+# Archives exceeding GitHub's 100 MB per-file limit
+/information/shou_ce/【正点原子】H7RX开发板资料盘(A盘)/7，硬件资料.zip
+/information/shou_ce/【正点原子】H7RX开发板资料盘(A盘)/8，STM32参考资料.zip
+
+# Local/editor noise
+.DS_Store
+Thumbs.db
+__pycache__/
+*.py[cod]

@@ -1,0 +1,6 @@
+connect
+h
+verifybin D:\wenjian\dpj\AD9238_data_read\build\jlink-debug\AD9238_data_read_Appli.bin 0x08000000
+regs
+g
+exit
