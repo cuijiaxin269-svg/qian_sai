@@ -16,16 +16,6 @@ extern "C" {
 #define AD9238_CHANNEL_SAMPLE_RATE_HZ 10000000.0f
 #define AD9238_DFT_SIGNAL_FREQ_HZ 1000000.0f
 #define AD9238_DFT_SAMPLE_COUNT 2000u
-/*
- * AD9238 dual-channel data is captured as an interleaved stream.  After
- * deinterleaving, channel A and channel B samples with the same array index
- * are not necessarily taken at exactly the same instant.  Compensate this
- * fixed aperture delay before calculating the bridge phasors.
- *
- * At 1 MHz and 10 MS/s, 1.0 sample corresponds to 36 degrees, matching the
- * observed A/B phase shortfall of about 34 degrees on the board.
- */
-#define AD9238_INTERLEAVED_CH_DELAY_SAMPLES 1.0f
 #define AD9238_DEFAULT_SIGNAL_FREQ_HZ 100000.0f
 #define AD9238_FREQ_MIN_HZ 10000.0f
 #define AD9238_FREQ_MAX_HZ 3000000.0f
@@ -35,6 +25,9 @@ extern "C" {
 #define AD9238_VALID_PHASE_AB 0x04u
 #define AD9238_RESULT_MAGIC 0x41443932u
 #define AD9238_PIN_DIAG_MAGIC 0x50443936u
+#define AD9238_CANDIDATE_DEBUG_MAGIC 0x43414E44u
+#define AD9238_CANDIDATE_COUNT 2u
+#define AD9238_CANDIDATE_BANK_COUNT 2u
 /*
  * Bridge reference resistor range selection.
  *
@@ -120,6 +113,49 @@ typedef struct {
   uint32_t data_bit_stuck_high_mask;
 } AD9238_RuntimeResult;
 
+/*
+ * Debug record for the deterministic VH/VL alignment result.  The backing
+ * store keeps two record slots so the J-Link memory layout remains stable,
+ * but candidate_count is now one: channel identity comes only from the
+ * measured fundamental amplitude (larger = VH), not from impedance scoring.
+ * No fixed channel phase compensation is applied.
+ */
+typedef struct {
+  uint32_t even_is_channel_a;
+  float channel_b_delay_samples;
+  float channel_b_delay_deg;
+  float score;
+  float channel_a_vpp_v;
+  float channel_b_vpp_v;
+  float channel_a_phase_deg;
+  float channel_b_phase_deg;
+  float phase_a_minus_b_deg;
+  float impedance_mag_ohm;
+  float impedance_phase_deg;
+  float impedance_real_ohm;
+  float impedance_imag_ohm;
+  float capacitance_pf;
+} AD9238_CandidateRecord;
+
+typedef struct {
+  uint32_t sequence;
+  uint32_t candidate_count;
+  uint32_t selected_index;
+  AD9238_CandidateRecord candidate[AD9238_CANDIDATE_COUNT];
+} AD9238_CandidateBank;
+
+/*
+ * J-Link can halt the core at any instruction.  A single candidate array can
+ * therefore be observed halfway through an update.  The producer writes only
+ * the inactive bank, then atomically changes active_bank after a data-memory
+ * barrier.  The bank named by active_bank is always a complete frame.
+ */
+typedef struct {
+  uint32_t magic;
+  uint32_t active_bank;
+  AD9238_CandidateBank bank[AD9238_CANDIDATE_BANK_COUNT];
+} AD9238_CandidateDebugStore;
+
 typedef struct {
   uint32_t magic;
   uint32_t gpiob_moder;
@@ -151,6 +187,7 @@ typedef struct {
 extern AD9238_Measurement ad9238_measurement;
 extern volatile AD9238_RuntimeResult g_ad9238_result;
 extern volatile AD9238_PinDiagnostics g_ad9238_pin_diag;
+extern volatile AD9238_CandidateDebugStore g_ad9238_candidate_debug;
 
 void AD9238_Init(void);
 HAL_StatusTypeDef AD9238_StartCapture(void);
