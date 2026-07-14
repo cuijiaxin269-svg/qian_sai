@@ -281,14 +281,16 @@ int main(void)
       }
       AD9238_ClearCaptureDone();
 
-      HAL_Delay(10);
-      (void)AD9238_StartCapture();
+      /*
+       * One-shot measurement mode: reset starts exactly one PSSI/DMA frame.
+       * Keep the completed calculation in RAM for J-Link inspection and do
+       * not start another capture until the MCU is reset again.
+       */
     }
     else if (AD9238_GetCaptureState() == AD9238_CAPTURE_ERROR)
     {
       AD9238_StopCapture();
-      HAL_Delay(10);
-      (void)AD9238_StartCapture();
+      /* In one-shot mode an error is also terminal; reset to try again. */
     }
   }
   /* USER CODE END 3 */

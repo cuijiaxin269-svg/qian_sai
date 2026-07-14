@@ -16,6 +16,7 @@ uint16_t ad9238_ch_b[AD9238_CHANNEL_SAMPLE_COUNT];
 AD9238_Measurement ad9238_measurement;
 volatile AD9238_RuntimeResult g_ad9238_result;
 volatile AD9238_PinDiagnostics g_ad9238_pin_diag;
+volatile AD9238_CandidateDebugStore g_ad9238_candidate_debug;
 volatile uint32_t g_capture_start_stage;
 
 static volatile AD9238_CaptureState g_capture_state = AD9238_CAPTURE_IDLE;
@@ -83,36 +84,6 @@ static float AD9238_WrapPhaseDeg(float phase_deg) {
     phase_deg += 360.0f;
   }
   return phase_deg;
-}
-
-static float AD9238_WrapPhaseRad(float phase_rad) {
-  const float two_pi = 6.28318530718f;
-  while (phase_rad > 3.14159265359f) {
-    phase_rad -= two_pi;
-  }
-  while (phase_rad < -3.14159265359f) {
-    phase_rad += two_pi;
-  }
-  return phase_rad;
-}
-
-static void AD9238_ApplyInterleavedPhaseCompensation(
-    AD9238_ChannelStats *channel_b_stats, float sample_rate_hz,
-    float channel_b_delay_samples) {
-  float phase_comp_rad;
-
-  if ((channel_b_stats == NULL) || (sample_rate_hz <= 0.0f) ||
-      (channel_b_stats->frequency_hz <= 0.0f)) {
-    return;
-  }
-
-  phase_comp_rad = 2.0f * 3.14159265359f * channel_b_stats->frequency_hz *
-                   channel_b_delay_samples / sample_rate_hz;
-
-  channel_b_stats->phase_rad =
-      AD9238_WrapPhaseRad(channel_b_stats->phase_rad - phase_comp_rad);
-  channel_b_stats->phase_deg =
-      AD9238_WrapPhaseDeg(channel_b_stats->phase_rad * 57.2957795131f);
 }
 
 static bool AD9238_FrequenciesClose(float a_hz, float b_hz) {
@@ -293,8 +264,7 @@ static void AD9238_CalculateChannelStats(const uint16_t *samples,
   stats->phase_deg = stats->phase_rad * 57.2957795131f;
 }
 
-static void AD9238_CalculateMeasurement(float sample_rate_hz,
-                                        float channel_b_delay_samples) {
+static void AD9238_CalculateMeasurement(float sample_rate_hz) {
   float vl_rms;
   float vh_re;
   float vh_im;
@@ -328,9 +298,6 @@ static void AD9238_CalculateMeasurement(float sample_rate_hz,
   AD9238_CalculateChannelStats(ad9238_ch_b, AD9238_CHANNEL_SAMPLE_COUNT,
                                sample_rate_hz, freq_b,
                                &ad9238_measurement.current_adc);
-  AD9238_ApplyInterleavedPhaseCompensation(&ad9238_measurement.current_adc,
-                                           sample_rate_hz,
-                                           channel_b_delay_samples);
 
   /*
    * Bridge impedance algorithm:
@@ -527,17 +494,30 @@ void AD9238_ClearCaptureDone(void) {
 }
 
 void AD9238_Deinterleave(bool even_is_channel_a) {
-  for (uint32_t i = 0u; i < AD9238_CHANNEL_SAMPLE_COUNT; i++) {
-    uint16_t even = ad9238_raw_buf[2u * i] & 0x0FFFu;
-    uint16_t odd = ad9238_raw_buf[2u * i + 1u] & 0x0FFFu;
-
-    if (even_is_channel_a) {
-      ad9238_ch_a[i] = even;
-      ad9238_ch_b[i] = odd;
-    } else {
-      ad9238_ch_a[i] = odd;
-      ad9238_ch_b[i] = even;
+  if (even_is_channel_a) {
+    /* Frame starts at VH[n]: pair VH[n] with the following VL[n]. */
+    for (uint32_t i = 0u; i < AD9238_CHANNEL_SAMPLE_COUNT; i++) {
+      ad9238_ch_a[i] = ad9238_raw_buf[2u * i] & 0x0FFFu;
+      ad9238_ch_b[i] = ad9238_raw_buf[2u * i + 1u] & 0x0FFFu;
     }
+  } else {
+    /*
+     * Frame starts at VL[n].  The following odd sample is VH[n+1], not
+     * VH[n], so a plain odd/even swap would compare VH[n+1] with VL[n] and
+     * introduce exactly one 10 MSPS channel period (36 degrees at 1 MHz).
+     * Drop the leading VL[n] and pair VH[n+1] with the next even VL[n+1].
+     */
+    for (uint32_t i = 0u; i + 1u < AD9238_CHANNEL_SAMPLE_COUNT; i++) {
+      ad9238_ch_a[i] = ad9238_raw_buf[2u * i + 1u] & 0x0FFFu;
+      ad9238_ch_b[i] = ad9238_raw_buf[2u * i + 2u] & 0x0FFFu;
+    }
+
+    /* The DFT consumes only the first 2000 of 2048 entries.  Initialize the
+     * unused tail as well so debug inspection never exposes stale data. */
+    ad9238_ch_a[AD9238_CHANNEL_SAMPLE_COUNT - 1u] =
+        ad9238_ch_a[AD9238_CHANNEL_SAMPLE_COUNT - 2u];
+    ad9238_ch_b[AD9238_CHANNEL_SAMPLE_COUNT - 1u] =
+        ad9238_ch_b[AD9238_CHANNEL_SAMPLE_COUNT - 2u];
   }
 }
 
@@ -551,129 +531,107 @@ GPIO_PinState AD9238_ReadOTR(void) {
   return HAL_GPIO_ReadPin(AD9238_OTR_GPIO_Port, AD9238_OTR_Pin);
 }
 
-static float AD9238_CandidateScore(const AD9238_Measurement *measurement) {
-  float freq_hz;
-  float cap_pf;
-  float z_phase_deg;
-  float real_abs;
+static void AD9238_SaveCandidateDebug(uint32_t index,
+                                      bool even_is_channel_a,
+                                      float channel_b_delay_samples,
+                                      float score,
+                                      volatile AD9238_CandidateBank *bank,
+                                      const AD9238_Measurement *measurement) {
+  volatile AD9238_CandidateRecord *record;
+  float frequency_hz;
   float imag_abs;
-  float dissipation_ratio;
-  float score = 0.0f;
 
-  if ((measurement == NULL) ||
-      (measurement->voltage.frequency_hz <= 0.0f) ||
-      (measurement->current_adc.frequency_hz <= 0.0f)) {
-    return 1000000000.0f;
+  if ((measurement == NULL) || (bank == NULL) ||
+      (index >= AD9238_CANDIDATE_COUNT)) {
+    return;
   }
 
-  if (!AD9238_FrequenciesClose(measurement->voltage.frequency_hz,
-                               measurement->current_adc.frequency_hz)) {
-    score += 10000000.0f;
-  }
-
-  /*
-   * VL is the voltage across R0. If it is near the noise floor, division by
-   * VL can create a plausible-looking but meaningless impedance.
-   */
-  if (measurement->current_adc.fundamental_peak_v <
-      AD9238_BRIDGE_MIN_VL_PEAK_V) {
-    score += 10000000.0f +
-             (AD9238_BRIDGE_MIN_VL_PEAK_V -
-              measurement->current_adc.fundamental_peak_v) *
-                 1000000.0f;
-  }
-
-  if (fabsf(measurement->impedance_imag_ohm) < 0.000001f) {
-    return score + 100000000.0f;
-  }
-
-  freq_hz = 0.5f * (measurement->voltage.frequency_hz +
-                    measurement->current_adc.frequency_hz);
-  if (freq_hz <= 0.0f) {
-    return score + 100000000.0f;
-  }
-
-  cap_pf = 1000000000000.0f /
-           (2.0f * 3.14159265359f * freq_hz *
-            fabsf(measurement->impedance_imag_ohm));
-
-  /*
-   * The selected result should look like a capacitor, not like an arbitrary
-   * phasor.  For impedance, a capacitive DUT should mainly sit in the fourth
-   * quadrant: Im(Z) < 0 and the phase normally lies between about -100 and
-   * +10 degrees allowing front-end error and ESR.
-   */
-  z_phase_deg =
-      atan2f(measurement->impedance_imag_ohm,
-             measurement->impedance_real_ohm) *
-      57.2957795131f;
-
-  if (cap_pf < AD9238_CAP_RANGE_MIN_PF) {
-    score += 1000000.0f + (AD9238_CAP_RANGE_MIN_PF - cap_pf) * 1000.0f;
-  } else if (cap_pf > AD9238_CAP_RANGE_MAX_PF) {
-    score += 1000000.0f + (cap_pf - AD9238_CAP_RANGE_MAX_PF) * 1000.0f;
-  }
-
-  if (measurement->impedance_imag_ohm >= 0.0f) {
-    score += 500000.0f + measurement->impedance_imag_ohm;
-  }
-
-  if (z_phase_deg < -100.0f) {
-    score += 200000.0f + (-100.0f - z_phase_deg) * 1000.0f;
-  } else if (z_phase_deg > 10.0f) {
-    score += 200000.0f + (z_phase_deg - 10.0f) * 1000.0f;
-  }
-
-  /* Negative resistance is usually the wrong VH/VL interpretation.  Allow a
-   * small amount for calibration/noise, but penalize it heavily. */
-  if (measurement->impedance_real_ohm < 0.0f) {
-    score += 200000.0f + fabsf(measurement->impedance_real_ohm) * 100.0f;
-  }
-
-  /*
-   * If several candidates pass the hard checks, prefer the one that is more
-   * capacitive: smaller |Re(Z)| / |Im(Z)| means less resistive leakage.
-   */
-  real_abs = fabsf(measurement->impedance_real_ohm);
+  record = &bank->candidate[index];
+  frequency_hz = 0.5f * (measurement->voltage.frequency_hz +
+                         measurement->current_adc.frequency_hz);
   imag_abs = fabsf(measurement->impedance_imag_ohm);
-  if (imag_abs > 0.000001f) {
-    dissipation_ratio = real_abs / imag_abs;
-    score += dissipation_ratio * 1000.0f;
-  }
 
-  return score;
+  record->even_is_channel_a = even_is_channel_a ? 1u : 0u;
+  record->channel_b_delay_samples = channel_b_delay_samples;
+  record->channel_b_delay_deg =
+      360.0f * frequency_hz * channel_b_delay_samples /
+      AD9238_CHANNEL_SAMPLE_RATE_HZ;
+  record->score = score;
+  record->channel_a_vpp_v =
+      2.0f * measurement->voltage.fundamental_peak_v;
+  record->channel_b_vpp_v =
+      2.0f * measurement->current_adc.fundamental_peak_v;
+  record->channel_a_phase_deg = measurement->voltage.phase_deg;
+  record->channel_b_phase_deg = measurement->current_adc.phase_deg;
+  record->phase_a_minus_b_deg =
+      AD9238_WrapPhaseDeg(measurement->voltage.phase_deg -
+                          measurement->current_adc.phase_deg);
+  record->impedance_mag_ohm = measurement->impedance_mag_ohm;
+  record->impedance_phase_deg = measurement->phase_v_minus_i_deg;
+  record->impedance_real_ohm = measurement->impedance_real_ohm;
+  record->impedance_imag_ohm = measurement->impedance_imag_ohm;
+  if ((frequency_hz > 0.0f) && (imag_abs > 0.000001f)) {
+    record->capacitance_pf =
+        1000000000000.0f /
+        (2.0f * 3.14159265359f * frequency_hz * imag_abs);
+  } else {
+    record->capacitance_pf = 0.0f;
+  }
 }
 
 const AD9238_Measurement *AD9238_ProcessCapture(bool even_is_channel_a) {
-  AD9238_Measurement best_measurement;
-  float best_score = 1000000000.0f;
-  const bool order_candidates[2] = {true, false};
-  const float delay_candidates[2] = {AD9238_INTERLEAVED_CH_DELAY_SAMPLES,
-                                     -AD9238_INTERLEAVED_CH_DELAY_SAMPLES};
-  bool best_even_is_channel_a = even_is_channel_a;
+  AD9238_ChannelStats even_stats = {0};
+  AD9238_ChannelStats odd_stats = {0};
+  volatile AD9238_CandidateBank *candidate_bank;
+  bool even_is_vh;
+  uint32_t inactive_bank;
 
   (void)even_is_channel_a;
-  for (uint32_t order = 0u; order < 2u; order++) {
-    for (uint32_t delay = 0u; delay < 2u; delay++) {
-      float score;
+  g_ad9238_candidate_debug.magic = AD9238_CANDIDATE_DEBUG_MAGIC;
+  inactive_bank =
+      (g_ad9238_candidate_debug.active_bank ^ 1u) &
+      (AD9238_CANDIDATE_BANK_COUNT - 1u);
+  candidate_bank = &g_ad9238_candidate_debug.bank[inactive_bank];
+  candidate_bank->candidate_count = 1u;
+  candidate_bank->selected_index = 0u;
 
-      AD9238_Deinterleave(order_candidates[order]);
-      AD9238_CalculateMeasurement(AD9238_CHANNEL_SAMPLE_RATE_HZ,
-                                  delay_candidates[delay]);
-      score = AD9238_CandidateScore(&ad9238_measurement);
-      if ((order == 0u && delay == 0u) || (score < best_score)) {
-        best_score = score;
-        best_measurement = ad9238_measurement;
-        best_even_is_channel_a = order_candidates[order];
-      }
-    }
-  }
+  /* First inspect the two raw parities without assigning bridge roles. */
+  AD9238_Deinterleave(true);
+  AD9238_CalculateChannelStats(ad9238_ch_a, AD9238_CHANNEL_SAMPLE_COUNT,
+                               AD9238_CHANNEL_SAMPLE_RATE_HZ,
+                               AD9238_DFT_SIGNAL_FREQ_HZ, &even_stats);
+  AD9238_CalculateChannelStats(ad9238_ch_b, AD9238_CHANNEL_SAMPLE_COUNT,
+                               AD9238_CHANNEL_SAMPLE_RATE_HZ,
+                               AD9238_DFT_SIGNAL_FREQ_HZ, &odd_stats);
 
-  ad9238_measurement = best_measurement;
-  AD9238_Deinterleave(best_even_is_channel_a);
+  /* Board rule: the larger fitted fundamental is VH.  If VH is in the odd
+   * parity, AD9238_Deinterleave(false) also advances VL by one channel sample
+   * so both arrays refer to the same ADC conversion cycle. */
+  even_is_vh =
+      even_stats.fundamental_peak_v >= odd_stats.fundamental_peak_v;
+  AD9238_Deinterleave(even_is_vh);
+  AD9238_CalculateMeasurement(AD9238_CHANNEL_SAMPLE_RATE_HZ);
+
+  AD9238_SaveCandidateDebug(0u, even_is_vh, 0.0f, 0.0f, candidate_bank,
+                            &ad9238_measurement);
+  candidate_bank->candidate[1].even_is_channel_a = 0u;
+  candidate_bank->candidate[1].channel_b_delay_samples = 0.0f;
+  candidate_bank->candidate[1].channel_b_delay_deg = 0.0f;
+  candidate_bank->candidate[1].score = 0.0f;
+  candidate_bank->candidate[1].channel_a_vpp_v = 0.0f;
+  candidate_bank->candidate[1].channel_b_vpp_v = 0.0f;
+  candidate_bank->candidate[1].channel_a_phase_deg = 0.0f;
+  candidate_bank->candidate[1].channel_b_phase_deg = 0.0f;
+  candidate_bank->candidate[1].phase_a_minus_b_deg = 0.0f;
+  candidate_bank->candidate[1].impedance_mag_ohm = 0.0f;
+  candidate_bank->candidate[1].impedance_phase_deg = 0.0f;
+  candidate_bank->candidate[1].impedance_real_ohm = 0.0f;
+  candidate_bank->candidate[1].impedance_imag_ohm = 0.0f;
+  candidate_bank->candidate[1].capacitance_pf = 0.0f;
 
   g_ad9238_result.magic = AD9238_RESULT_MAGIC;
   g_ad9238_result.sequence++;
+  candidate_bank->sequence = g_ad9238_result.sequence;
   g_ad9238_result.valid_mask = 0u;
   if (ad9238_measurement.voltage.frequency_hz > 0.0f) {
     g_ad9238_result.valid_mask |= AD9238_VALID_CHANNEL_A;
@@ -725,6 +683,11 @@ const AD9238_Measurement *AD9238_ProcessCapture(bool even_is_channel_a) {
   g_ad9238_result.bridge_impedance_imag_ohm =
       ad9238_measurement.impedance_imag_ohm;
   AD9238_UpdateDataBusDiagnostics();
+
+  /* Publish the completed candidate snapshot with one atomic 32-bit store. */
+  __DMB();
+  g_ad9238_candidate_debug.active_bank = inactive_bank;
+  __DMB();
   return &ad9238_measurement;
 }
 
