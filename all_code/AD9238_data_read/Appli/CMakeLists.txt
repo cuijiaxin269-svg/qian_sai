@@ -63,6 +63,19 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined symbols
 )
 
+option(AD9238_SLOW_CLOCK_DIAGNOSTIC "Use a 1 MHz ADC clock for PD6/PSSI timing diagnosis" OFF)
+if(AD9238_SLOW_CLOCK_DIAGNOSTIC)
+    target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE AD9238_SLOW_CLOCK_DIAGNOSTIC=1)
+endif()
+
+option(AD9238_D10_PB5_PULLUP_DIAGNOSTIC
+       "Route PSSI D10 to PB5 with an internal pull-up for input-path diagnosis"
+       OFF)
+if(AD9238_D10_PB5_PULLUP_DIAGNOSTIC)
+    target_compile_definitions(${CMAKE_PROJECT_NAME}
+        PRIVATE AD9238_D10_PB5_PULLUP_DIAGNOSTIC=1)
+endif()
+
 # Enable CMake support for ASM and C languages
 enable_language(C ASM)
 
@@ -89,7 +102,5 @@ list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
 if((CMAKE_C_STANDARD EQUAL 90) OR (CMAKE_C_STANDARD EQUAL 99))
     message(ERROR "Generated code requires C11 or higher")
 endif()
-
-
 
 

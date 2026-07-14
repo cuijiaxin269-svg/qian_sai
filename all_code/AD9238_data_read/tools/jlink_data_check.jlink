@@ -9,7 +9,7 @@ mem32 0x58020810 2
 mem32 0x58020410 1
 
 // First 128 captured 16-bit PSSI samples.
-mem16 0x24000160 128
+mem16 0x24000140 128
 
 g
 exit

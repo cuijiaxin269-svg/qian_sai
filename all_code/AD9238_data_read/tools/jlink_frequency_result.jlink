@@ -1,12 +1,15 @@
 connect
 h
 
-// AD9238_RuntimeResult: magic, sequence, valid mask, then 10 float values.
-mem32 0x240041B4 13
+// Runtime result: base statistics, t=0 phases, and 12-bit bus diagnostics.
+mem32 0x240041B4 19
+
+// PD6/PSSI pin diagnostics.
+mem32 0x24004200 13
 
 // Capture state: start stage, state, last error, tick, restarts,
 // completed frames and terminal overruns.
-mem32 0x240041E8 7
+mem32 0x24004234 7
 
 g
 exit

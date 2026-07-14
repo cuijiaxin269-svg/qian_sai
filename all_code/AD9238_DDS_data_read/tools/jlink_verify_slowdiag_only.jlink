@@ -1,0 +1,5 @@
+connect
+h
+verifybin D:\qian_sai\all_code\AD9238_DDS_data_read\build\vscode-slowdiag\AD9238_DDS_data_read_Appli.bin 0x08000000
+g
+exit

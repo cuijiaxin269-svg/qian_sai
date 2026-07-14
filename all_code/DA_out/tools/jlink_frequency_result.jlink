@@ -1,0 +1,15 @@
+connect
+h
+
+// Runtime result: base statistics, t=0 phases, and 12-bit bus diagnostics.
+mem32 0x240041D4 19
+
+// PD6/PSSI pin diagnostics.
+mem32 0x24004220 13
+
+// Capture state: start stage, state, last error, tick, restarts,
+// completed frames and terminal overruns.
+mem32 0x24004254 7
+
+g
+exit

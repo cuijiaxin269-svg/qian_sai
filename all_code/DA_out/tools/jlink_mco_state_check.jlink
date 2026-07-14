@@ -1,0 +1,8 @@
+connect
+h
+// g_mco2_source_hz and g_high_speed_clock_hz
+mem32 0x24000138 2
+// RCC CFGR contains MCO2 source and prescaler fields.
+mem32 0x58024410 1
+g
+exit

@@ -1,0 +1,13 @@
+connect
+h
+
+// AD9238_Measurement: two 11-float channel records plus 7 derived floats.
+mem32 0x24004160 29
+
+// Runtime result, PD6/PSSI pin diagnostics and capture diagnostics.
+mem32 0x240041D4 19
+mem32 0x24004220 13
+mem32 0x24004254 7
+
+g
+exit

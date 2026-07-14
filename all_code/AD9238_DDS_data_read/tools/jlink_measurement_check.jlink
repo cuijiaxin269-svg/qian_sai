@@ -1,0 +1,15 @@
+connect
+h
+
+// AD9238_Measurement: two 11-float channel records plus 7 derived floats.
+mem32 0x24004160 29
+
+// Runtime result: includes bridge impedance mag/phase/real/imag.
+mem32 0x240041D4 23
+
+// PD6/PSSI pin diagnostics and capture diagnostics.
+mem32 0x24004230 13
+mem32 0x24004264 7
+
+g
+exit

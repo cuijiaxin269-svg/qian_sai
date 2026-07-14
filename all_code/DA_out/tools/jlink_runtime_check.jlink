@@ -1,0 +1,38 @@
+connect
+h
+
+// Firmware status variables
+mem32 0x24000000 1
+mem32 0x24000134 4
+mem32 0x24000140 3
+mem32 0x24004254 7
+
+// Cortex-M fault status
+mem32 0xE000ED28 1
+
+// GPIOF: MODER/IDR/AFRH (PF8 should be alternate-function 8)
+mem32 0x58021400 1
+mem32 0x58021410 1
+mem32 0x58021424 1
+
+// GPIOA and USART2: PA2/PA3 alternate function and UART status
+mem32 0x58020000 10
+mem32 0x40004400 12
+
+// PSSI: CR/SR/RIS/IER/MIS and DR
+mem32 0x48000400 8
+
+// GPDMA1 channel 15 registers
+mem32 0x400217D0 24
+
+g
+sleep 2000
+h
+
+// Read the dynamic capture state again after two seconds
+mem32 0x24004254 7
+mem32 0x48000400 8
+mem32 0x400217D0 24
+
+g
+exit

@@ -1,0 +1,8 @@
+connect
+r
+h
+loadbin D:\qian_sai\all_code\DA_out\build\vscode-debug\DA_out_Appli.bin 0x08000000
+verifybin D:\qian_sai\all_code\DA_out\build\vscode-debug\DA_out_Appli.bin 0x08000000
+r
+g
+exit

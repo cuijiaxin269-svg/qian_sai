@@ -1,0 +1,5 @@
+connect
+h
+savebin D:\qian_sai\all_code\AD9238_DDS_data_read\build\vscode-debug\ad9238_channels.bin 0x24002160 0x2000
+g
+exit

@@ -31,8 +31,21 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define AD9238_MCO_FREQUENCY_HZ 20000000u
 #define AD9238_SYSTEM_CLOCK_HZ 240000000u
+#define AD9238_EXPECTED_CHANNEL_A_HZ 1000000.0f
+#define AD9238_EXPECTED_CHANNEL_B_HZ 500000.0f
+
+#if defined(AD9238_SLOW_CLOCK_DIAGNOSTIC)
+#define AD9238_MCO_FREQUENCY_HZ 1000000u
+#define AD9238_PLL2P_DIV 16u
+#define AD9238_MCO_SOURCE_HZ 15000000u
+#define AD9238_MCO_DIVIDER RCC_MCODIV_15
+#else
+#define AD9238_MCO_FREQUENCY_HZ 20000000u
+#define AD9238_PLL2P_DIV 2u
+#define AD9238_MCO_SOURCE_HZ 120000000u
+#define AD9238_MCO_DIVIDER RCC_MCODIV_6
+#endif
 
 /* USER CODE END PD */
 
@@ -61,11 +74,42 @@ static void MX_PSSI_Init(void);
 /* USER CODE BEGIN PFP */
 static void AD9238_HighSpeedClock_Init(void);
 static void AD9238_MCO20MHz_Init(void);
+static bool AD9238_ChannelOrderNeedsSwap(const AD9238_Measurement *measurement);
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static float AD9238_AbsFloat(float value)
+{
+  return (value < 0.0f) ? -value : value;
+}
+
+static bool AD9238_ChannelOrderNeedsSwap(const AD9238_Measurement *measurement)
+{
+  float direct_error;
+  float swapped_error;
+
+  if ((measurement == NULL) ||
+      (measurement->voltage.frequency_hz <= 0.0f) ||
+      (measurement->current_adc.frequency_hz <= 0.0f))
+  {
+    return false;
+  }
+
+  direct_error =
+      AD9238_AbsFloat(measurement->voltage.frequency_hz -
+                      AD9238_EXPECTED_CHANNEL_A_HZ) +
+      AD9238_AbsFloat(measurement->current_adc.frequency_hz -
+                      AD9238_EXPECTED_CHANNEL_B_HZ);
+  swapped_error =
+      AD9238_AbsFloat(measurement->voltage.frequency_hz -
+                      AD9238_EXPECTED_CHANNEL_B_HZ) +
+      AD9238_AbsFloat(measurement->current_adc.frequency_hz -
+                      AD9238_EXPECTED_CHANNEL_A_HZ);
+  return swapped_error < direct_error;
+}
+
 static void AD9238_HighSpeedClock_Init(void)
 {
   RCC_OscInitTypeDef osc = {0};
@@ -132,7 +176,7 @@ static void AD9238_MCO20MHz_Init(void)
   RCC_OscInitStruct.PLL2.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL2.PLLM = 32u;
   RCC_OscInitStruct.PLL2.PLLN = 120u;
-  RCC_OscInitStruct.PLL2.PLLP = 2u;
+  RCC_OscInitStruct.PLL2.PLLP = AD9238_PLL2P_DIV;
   RCC_OscInitStruct.PLL2.PLLQ = 2u;
   RCC_OscInitStruct.PLL2.PLLR = 2u;
   RCC_OscInitStruct.PLL2.PLLS = 2u;
@@ -147,12 +191,12 @@ static void AD9238_MCO20MHz_Init(void)
 
   __HAL_RCC_PLL2CLKOUT_ENABLE(RCC_PLL_PCLK);
   g_mco2_source_hz = HAL_RCC_GetPLL2PFreq();
-  if (g_mco2_source_hz != 120000000u)
+  if (g_mco2_source_hz != AD9238_MCO_SOURCE_HZ)
   {
     Error_Handler();
   }
 
-  HAL_RCC_MCOConfig(RCC_MCO2, RCC_MCO2SOURCE_PLL2P, RCC_MCODIV_6);
+  HAL_RCC_MCOConfig(RCC_MCO2, RCC_MCO2SOURCE_PLL2P, AD9238_MCO_DIVIDER);
 }
 
 /* USER CODE END 0 */
@@ -219,6 +263,13 @@ int main(void)
     if (AD9238_IsCaptureDone())
     {
       g_ad9238_last_measurement = AD9238_ProcessCapture(true);
+      if (AD9238_ChannelOrderNeedsSwap(g_ad9238_last_measurement))
+      {
+        uint32_t capture_sequence = g_ad9238_result.sequence;
+        g_ad9238_last_measurement = AD9238_ProcessCapture(false);
+        /* The second processing pass corrects labels for the same frame. */
+        g_ad9238_result.sequence = capture_sequence;
+      }
       AD9238_ClearCaptureDone();
 
       HAL_Delay(10);

@@ -1,0 +1,5 @@
+connect
+h
+verifybin D:\qian_sai\all_code\DA_out\build\vscode-pb5diag\DA_out_Appli.bin 0x08000000
+g
+exit

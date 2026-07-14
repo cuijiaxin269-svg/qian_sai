@@ -1,0 +1,47 @@
+T0950 030:075.654   SEGGER J-Link V8.16 Log File
+T0950 030:075.756   DLL Compiled: Feb 26 2025 12:07:26
+T0950 030:075.764   Logging started @ 2026-04-26 08:49
+T0950 030:075.772   Process: D:\keil\UV4\UV4.exe
+T0950 030:075.788 - 30075.780ms 
+T0950 030:075.802 JLINK_SetWarnOutHandler(...)
+T0950 030:075.808 - 0.010ms 
+T0950 030:075.820 JLINK_OpenEx(...)
+T0950 030:077.444   
+  ***** Error: 
+T0950 030:077.466   Cannot connect to J-Link.
+T0950 030:077.530 - 1.707ms returns "Cannot connect to J-Link."
+T0950 030:077.664 
+  ***** Warning: 
+T0950 030:077.676 API Error: API JLINK_GetHardwareVersion function called before JLINKARM_Open()
+T0950 030:077.690 JLINK_GetHardwareVersion()
+T0950 030:079.244   
+  ***** Error: 
+T0950 030:079.322   Cannot connect to J-Link.
+T0950 030:079.350 - 1.662ms 
+T0950 035:174.624 JLINK_IsOpen()
+T0950 035:174.656 - 0.044ms returns 0x00
+T0950 035:174.668 JLINK_EMU_SelectByUSBSN(SerialNo = 0)
+T0950 035:176.000 - 1.331ms returns 0xFFFFFFFF
+T0950 035:176.016 JLINK_EnableLog(...)
+T0950 035:176.024 - 0.007ms 
+T0950 035:176.036 JLINK_SetLogFile(...)
+T0950 035:176.040 - 0.007ms 
+T0950 035:176.052 JLINK_SetWarnOutHandler(...)
+T0950 035:176.056 - 0.007ms 
+T0950 035:176.068 JLINK_OpenEx(...)
+T0950 035:178.564   
+  ***** Error: 
+T0950 035:178.572   Cannot connect to J-Link.
+T0950 035:178.648 - 2.579ms returns "Cannot connect to J-Link."
+T0950 035:178.812 
+  ***** Warning: 
+T0950 035:178.820 API Error: API JLINK_GetHardwareVersion function called before JLINKARM_Open()
+T0950 035:178.824 JLINK_GetHardwareVersion()
+T0950 035:180.328   
+  ***** Error: 
+T0950 035:180.336   Cannot connect to J-Link.
+T0950 035:180.368 - 1.542ms 
+T0950 037:580.956 JLINK_Close()
+T0950 037:581.152 - 0.195ms
+T0950 037:581.160   
+T0950 037:581.164   Closed

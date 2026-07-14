@@ -1,0 +1,7 @@
+--target=arm-arm-none-eabi -mcpu=cortex-m3 -masm=auto  -Wa,armasm,--diag_suppress=A1950W -c
+-gdwarf-4
+-I./RTE/_JiDianQiJuZhen
+-ID:/keil/ARM/ARM/CMSIS/6.2.0/CMSIS/Core/Include
+-ID:/keil/ARM/Keil/STM32F1xx_DFP/2.4.1/Device/Include
+-Wa,armasm,--pd,"__UVISION_VERSION SETA 543" -Wa,armasm,--pd,"STM32F10X_MD SETA 1" -Wa,armasm,--pd,"_RTE_ SETA 1"
+-o jidianqijuzhen/startup_stm32f103xb.o "startup_stm32f103xb.s"

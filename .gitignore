@@ -10,3 +10,50 @@
 Thumbs.db
 __pycache__/
 *.py[cod]
+
+# Local IDE state and application logs
+.idea/
+*.iml
+*.log
+
+# Firmware build output (Keil / GCC / IAR)
+*.o
+*.d
+*.axf
+*.hex
+*.map
+*.lst
+*.dep
+*.crf
+*.lnp
+*.uvguix.*
+*.uvoptx
+*.uvopt
+*.ewd
+*.dbgconf
+*.build_log.htm
+*.Bak
+*.bak
+*.ewt
+**/.settings/ide.store.json
+
+# Android build products
+*.class
+*.dex
+*.apk
+
+# Re-downloadable tools, recordings, and archive backups
+/toolchain_downloads/
+/*.mp4
+*.zip
+*.rar
+*.7z
+*.tar
+*.gz
+*.msi
+
+# Vendor manuals, demos, installers, and reference packages
+/information/shou_ce/
+
+# Exact local backup of the maintained DA_out project
+/all_code/copy_code/

@@ -1,5 +1,5 @@
 connect
 h
-savebin D:\wenjian\dpj\AD9238_data_read\build\jlink-debug\ad9238_capture.bin 0x24000160 0x2000
+savebin D:\qian_sai\all_code\AD9238_data_read\build\vscode-debug\ad9238_capture.bin 0x24000140 0x2000
 g
 exit

@@ -1,0 +1,325 @@
+/* USER CODE BEGIN Header */
+/**
+  ******************************************************************************
+  * @file           : main.c
+  * @brief          : Main program body
+  ******************************************************************************
+  * @attention
+  *
+  * Copyright (c) 2026 STMicroelectronics.
+  * All rights reserved.
+  *
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
+  *
+  ******************************************************************************
+  */
+/* USER CODE END Header */
+/* Includes ------------------------------------------------------------------*/
+#include "main.h"
+
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
+#include "dac_output.h"
+/* USER CODE END Includes */
+
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN PTD */
+
+/* USER CODE END PTD */
+
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
+#define DA_OUT_SYSTEM_CLOCK_HZ 240000000u
+
+/* USER CODE END PD */
+
+/* Private macro -------------------------------------------------------------*/
+/* USER CODE BEGIN PM */
+
+/* USER CODE END PM */
+
+/* Private variables ---------------------------------------------------------*/
+
+PSSI_HandleTypeDef hpssi;
+DMA_HandleTypeDef handle_GPDMA1_Channel15;
+
+/* USER CODE BEGIN PV */
+volatile uint32_t g_boot_stage;
+volatile uint32_t g_high_speed_clock_hz;
+
+/* USER CODE END PV */
+
+/* Private function prototypes -----------------------------------------------*/
+static void MX_GPIO_Init(void);
+static void MX_GPDMA1_Init(void);
+static void MX_PSSI_Init(void);
+/* USER CODE BEGIN PFP */
+static void DA_OUT_HighSpeedClock_Init(void);
+
+/* USER CODE END PFP */
+
+/* Private user code ---------------------------------------------------------*/
+/* USER CODE BEGIN 0 */
+static void DA_OUT_HighSpeedClock_Init(void)
+{
+  RCC_OscInitTypeDef osc = {0};
+  RCC_ClkInitTypeDef clk = {0};
+
+  /* Run the core and AXI/AHB fabric from PLL1P at 240 MHz. */
+  if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  osc.OscillatorType = RCC_OSCILLATORTYPE_NONE;
+  osc.PLL1.PLLState = RCC_PLL_ON;
+  osc.PLL1.PLLSource = RCC_PLLSOURCE_HSI;
+  osc.PLL1.PLLM = 32u;
+  osc.PLL1.PLLN = 240u;
+  osc.PLL1.PLLP = 2u;
+  osc.PLL1.PLLQ = 2u;
+  osc.PLL1.PLLR = 2u;
+  osc.PLL1.PLLS = 2u;
+  osc.PLL1.PLLT = 1u;
+  osc.PLL1.PLLFractional = 0u;
+  osc.PLL2.PLLState = RCC_PLL_NONE;
+  osc.PLL3.PLLState = RCC_PLL_NONE;
+  if (HAL_RCC_OscConfig(&osc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  clk.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK |
+                  RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2 |
+                  RCC_CLOCKTYPE_PCLK4 | RCC_CLOCKTYPE_PCLK5;
+  clk.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  clk.SYSCLKDivider = RCC_SYSCLK_DIV1;
+  clk.AHBCLKDivider = RCC_HCLK_DIV1;
+  clk.APB1CLKDivider = RCC_APB1_DIV2;
+  clk.APB2CLKDivider = RCC_APB2_DIV2;
+  clk.APB4CLKDivider = RCC_APB4_DIV2;
+  clk.APB5CLKDivider = RCC_APB5_DIV2;
+  if (HAL_RCC_ClockConfig(&clk, FLASH_LATENCY_7) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  g_high_speed_clock_hz = SystemCoreClock;
+  if (g_high_speed_clock_hz != DA_OUT_SYSTEM_CLOCK_HZ)
+  {
+    Error_Handler();
+  }
+}
+
+/* USER CODE END 0 */
+
+/**
+  * @brief  The application entry point.
+  * @retval int
+  */
+int main(void)
+{
+
+  /* USER CODE BEGIN 1 */
+  SCnSCB->ACTLR |= (1UL << 1);
+
+  /* USER CODE END 1 */
+
+  /* MCU Configuration--------------------------------------------------------*/
+
+  /* Update SystemCoreClock variable according to RCC registers values. */
+  SystemCoreClockUpdate();
+
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
+
+  /* USER CODE BEGIN Init */
+
+  /* USER CODE END Init */
+
+  /* USER CODE BEGIN SysInit */
+  DA_OUT_HighSpeedClock_Init();
+
+  /* USER CODE END SysInit */
+
+  /* Initialize all configured peripherals */
+  g_boot_stage = 1u;
+  MX_GPIO_Init();
+  g_boot_stage = 2u;
+  /* USER CODE BEGIN 2 */
+  DAC_Output_Init();
+  g_boot_stage = 3u;
+
+  /* USER CODE END 2 */
+
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+  while (1)
+  {
+    g_boot_stage = 4u;
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
+    HAL_Delay(1000);
+  }
+  /* USER CODE END 3 */
+}
+
+/**
+  * @brief GPDMA1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_GPDMA1_Init(void)
+{
+
+  /* USER CODE BEGIN GPDMA1_Init 0 */
+
+  /* USER CODE END GPDMA1_Init 0 */
+
+  /* Peripheral clock enable */
+  __HAL_RCC_GPDMA1_CLK_ENABLE();
+
+  /* GPDMA1 interrupt Init */
+    HAL_NVIC_SetPriority(GPDMA1_Channel15_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(GPDMA1_Channel15_IRQn);
+
+  /* USER CODE BEGIN GPDMA1_Init 1 */
+
+  /* USER CODE END GPDMA1_Init 1 */
+  /* USER CODE BEGIN GPDMA1_Init 2 */
+  HAL_NVIC_SetPriority(PSSI_IRQn, 1, 0);
+  HAL_NVIC_EnableIRQ(PSSI_IRQn);
+
+  /* USER CODE END GPDMA1_Init 2 */
+
+}
+
+/**
+  * @brief PSSI Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_PSSI_Init(void)
+{
+
+  /* USER CODE BEGIN PSSI_Init 0 */
+
+  /* USER CODE END PSSI_Init 0 */
+
+  /* USER CODE BEGIN PSSI_Init 1 */
+
+  /* USER CODE END PSSI_Init 1 */
+  hpssi.Instance = PSSI;
+  hpssi.Init.DataWidth = HAL_PSSI_16BITS;
+  hpssi.Init.BusWidth = HAL_PSSI_16LINES;
+  hpssi.Init.ControlSignal = HAL_PSSI_DE_RDY_DISABLE;
+  hpssi.Init.ClockPolarity = HAL_PSSI_FALLING_EDGE;
+  hpssi.Init.DataEnablePolarity = HAL_PSSI_DEPOL_ACTIVE_LOW;
+  hpssi.Init.ReadyPolarity = HAL_PSSI_RDYPOL_ACTIVE_LOW;
+  if (HAL_PSSI_Init(&hpssi) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_PSSI_ClockConfig(&hpssi, HAL_PSSI_CLOCK_EXT) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN PSSI_Init 2 */
+
+  /* USER CODE END PSSI_Init 2 */
+
+}
+
+/**
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_GPIO_Init(void)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  /* USER CODE BEGIN MX_GPIO_Init_1 */
+
+  /* USER CODE END MX_GPIO_Init_1 */
+
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOE_CLK_ENABLE();
+  __HAL_RCC_GPIOF_CLK_ENABLE();
+  __HAL_RCC_GPIOG_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(DAC_CS_GPIO_Port, DAC_CS_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(DAC_SDIO_GPIO_Port, DAC_SDIO_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(DAC_SCLK_GPIO_Port, DAC_SCLK_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin : DAC_CS_Pin */
+  GPIO_InitStruct.Pin = DAC_CS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(DAC_CS_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : DAC_SDIO_Pin */
+  GPIO_InitStruct.Pin = DAC_SDIO_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(DAC_SDIO_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : DAC_SCLK_Pin */
+  GPIO_InitStruct.Pin = DAC_SCLK_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(DAC_SCLK_GPIO_Port, &GPIO_InitStruct);
+
+  /* USER CODE BEGIN MX_GPIO_Init_2 */
+
+  /* USER CODE END MX_GPIO_Init_2 */
+}
+
+/* USER CODE BEGIN 4 */
+
+/* USER CODE END 4 */
+
+/**
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
+  */
+void Error_Handler(void)
+{
+  /* USER CODE BEGIN Error_Handler_Debug */
+  /* User can add his own implementation to report the HAL error return state */
+  __disable_irq();
+  while (1)
+  {
+  }
+  /* USER CODE END Error_Handler_Debug */
+}
+#ifdef USE_FULL_ASSERT
+/**
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
+  */
+void assert_failed(uint8_t *file, uint32_t line)
+{
+  /* USER CODE BEGIN 6 */
+  /* User can add his own implementation to report the file name and line number,
+     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+  /* USER CODE END 6 */
+}
+#endif /* USE_FULL_ASSERT */
