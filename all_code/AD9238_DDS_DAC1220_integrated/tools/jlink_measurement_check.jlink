@@ -1,0 +1,43 @@
+connect
+h
+
+// AD9238_Measurement: two 11-float channel records plus 7 derived floats.
+mem32 0x24004160 29
+
+// Runtime result: includes bridge impedance mag/phase/real/imag.
+mem32 0x240041D4 23
+
+// PD6/PSSI pin diagnostics and capture diagnostics.
+mem32 0x24004230 13
+
+// Atomic double-buffer candidate store (64 words):
+// store header: magic, active_bank.
+// Then bank 0 and bank 1, each 31 words:
+//   sequence, candidate_count, selected_index,
+//   followed by 2 fixed debug slots, each 14 words:
+//   even_is_A, delay_samples, delay_deg, score, A_vpp, B_vpp,
+//   A_phase, B_phase, A_minus_B, Z_mag, Z_phase, Z_real, Z_imag, C_pf.
+// candidate_count is now 1. Slot 0 is the amplitude-selected and cycle-aligned
+// VH/VL result; slot 1 is reserved/zero so the historical address layout stays
+// stable. delay_samples and delay_deg are always zero; no phase compensation.
+// Only decode the bank selected by active_bank; the other bank may be updating.
+mem32 0x24004264 64
+
+// Final capacitance result (9 words) at 0x24004364:
+// magic="CAP1", sequence, valid_mask, excitation_frequency_hz,
+// reference_resistance_ohm, series_capacitance_pf, series_capacitance_nf,
+// equivalent_series_resistance_ohm, dissipation_factor.
+mem32 0x24004364 9
+
+// Capture diagnostics: start_stage, state, last_error, start_tick,
+// restart_count, completed_count, terminal_overrun_count.
+mem32 0x24004388 7
+
+// DAC1220 initialization diagnostics:
+// init_result (0=not started, 1=busy, 2=OK, 3=timeout),
+// last_status_byte, status_read_count.
+// A timeout no longer prevents AD9238/DDS startup.
+mem32 0x240043A4 3
+
+g
+exit

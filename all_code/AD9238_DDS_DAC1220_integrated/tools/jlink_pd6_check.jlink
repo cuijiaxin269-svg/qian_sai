@@ -1,0 +1,40 @@
+connect
+h
+
+// GPIOD IDR snapshots. Bit 6 is PD6 / PSSI_D10.
+mem32 0x58020C00 1
+mem32 0x58020C20 1
+mem32 0x58020C10 1
+sleep 1
+mem32 0x58020C10 1
+sleep 1
+mem32 0x58020C10 1
+sleep 1
+mem32 0x58020C10 1
+sleep 1
+mem32 0x58020C10 1
+sleep 1
+mem32 0x58020C10 1
+sleep 1
+mem32 0x58020C10 1
+sleep 1
+mem32 0x58020C10 1
+sleep 1
+mem32 0x58020C10 1
+sleep 1
+mem32 0x58020C10 1
+sleep 1
+mem32 0x58020C10 1
+sleep 1
+mem32 0x58020C10 1
+sleep 1
+mem32 0x58020C10 1
+sleep 1
+mem32 0x58020C10 1
+sleep 1
+mem32 0x58020C10 1
+sleep 1
+mem32 0x58020C10 1
+
+g
+exit

@@ -1,0 +1,17 @@
+connect
+
+// GPIOB: verify PB5 is not also left in PSSI alternate-function mode.
+mem32 0x58020400 1
+mem32 0x5802040C 1
+mem32 0x58020410 1
+mem32 0x58020420 1
+
+// GPIOD: PD6 should be alternate-function mode, no pull, AF6.
+mem32 0x58020C00 1
+mem32 0x58020C0C 1
+mem32 0x58020C10 1
+mem32 0x58020C20 1
+
+// PSSI CR/SR/RIS/IER/MIS. Do not read DR because that consumes FIFO data.
+mem32 0x48000400 5
+exit

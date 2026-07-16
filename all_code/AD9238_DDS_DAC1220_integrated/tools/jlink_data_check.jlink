@@ -1,0 +1,15 @@
+connect
+h
+
+// GPIOC: PC0=PWDN and PC1=OEB. Read MODER, IDR and ODR.
+mem32 0x58020800 1
+mem32 0x58020810 2
+
+// GPIOB: PB7=AD9238 OTR. Read IDR.
+mem32 0x58020410 1
+
+// First 128 captured 16-bit PSSI samples.
+mem16 0x24000160 128
+
+g
+exit

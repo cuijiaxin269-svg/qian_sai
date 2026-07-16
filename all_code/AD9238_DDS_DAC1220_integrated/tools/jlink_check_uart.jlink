@@ -1,0 +1,7 @@
+connect
+h
+regs
+mem32 0x40004400 12
+mem32 0x58020000 10
+g
+exit

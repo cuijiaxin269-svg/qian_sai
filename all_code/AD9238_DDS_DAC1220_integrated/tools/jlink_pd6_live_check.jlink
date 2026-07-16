@@ -1,0 +1,25 @@
+connect
+
+// GPIOD: MODER, PUPDR, IDR and AFRL. PD6 should be AF mode (10b), AF6.
+mem32 0x58020C00 1
+mem32 0x58020C0C 1
+mem32 0x58020C20 1
+
+// Sample GPIOD_IDR repeatedly while the target and ADC clock keep running.
+mem32 0x58020C10 1
+mem32 0x58020C10 1
+mem32 0x58020C10 1
+mem32 0x58020C10 1
+mem32 0x58020C10 1
+mem32 0x58020C10 1
+mem32 0x58020C10 1
+mem32 0x58020C10 1
+mem32 0x58020C10 1
+mem32 0x58020C10 1
+mem32 0x58020C10 1
+mem32 0x58020C10 1
+mem32 0x58020C10 1
+mem32 0x58020C10 1
+mem32 0x58020C10 1
+mem32 0x58020C10 1
+exit
