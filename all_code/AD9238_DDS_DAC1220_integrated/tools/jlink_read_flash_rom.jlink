@@ -1,0 +1,10 @@
+connect
+h
+// Flash/ROM starts at 0x08000000 in the application linker script.
+// Display the vector table and the beginning of the read-only data section.
+mem32 0x08000000 32
+mem32 0x08007488 32
+// Save the complete 64 KB application Flash region for offline inspection.
+savebin D:\qian_sai\all_code\AD9238_DDS_DAC1220_integrated\build\vscode-debug\flash_rom.bin 0x08000000 0x10000
+g
+exit

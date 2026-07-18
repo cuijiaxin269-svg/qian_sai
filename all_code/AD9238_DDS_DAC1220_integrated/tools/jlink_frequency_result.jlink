@@ -1,0 +1,15 @@
+connect
+h
+
+// Runtime result: base statistics, t=0 phases, bridge impedance, and bus diagnostics.
+mem32 0x240041D4 23
+
+// PD6/PSSI pin diagnostics.
+mem32 0x24004230 13
+
+// Capture state: start stage, state, last error, tick, restarts,
+// completed frames and terminal overruns.
+mem32 0x24004264 7
+
+g
+exit
