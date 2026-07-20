@@ -16,6 +16,10 @@ __pycache__/
 *.iml
 *.log
 
+# Measurement outputs and generated plots
+/data_save/
+/curve_plot_check.png
+
 # Firmware build output (Keil / GCC / IAR)
 *.o
 *.d
@@ -41,6 +45,12 @@ __pycache__/
 *.class
 *.dex
 *.apk
+
+# Python app local environments and packaging outputs
+/shang_wei_ji/.venv/
+/shang_wei_ji/build/
+/shang_wei_ji/dist/
+/shang_wei_ji/dist.zip
 
 # Re-downloadable tools, recordings, and archive backups
 /toolchain_downloads/
